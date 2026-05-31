@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { AttackDefinition, AttackConfig, ArcPosition, ParticleType, AttackPhase } from '../types/attack'
 import { runAttack } from '../lib/interpreter'
 import type { AttackJSON } from '../lib/interpreter'
-import sliceJson from '../attacks/slice.json'
+import sliceJson from '../reference/slice-base.json'
 import styles from './AnimationStage.module.css'
 
 // ─── Attack registry ──────────────────────────────────────────────────────────

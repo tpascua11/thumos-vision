@@ -5,10 +5,10 @@
 
   "arc": {
     "slashAngle": 1.5707963267948966,
-    "arcHalfSpan": 0.38,
-    "arcRadius": 130,
+    "arcHalfSpan": 0.52,
+    "arcRadius": 185,
     "duration": 180,
-    "steps": 22
+    "steps": 28
   },
 
   "colors": {
