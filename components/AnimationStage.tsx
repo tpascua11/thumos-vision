@@ -1,6 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import type { AttackDefinition, AttackConfig, ArcPosition, ParticleType, AttackPhase } from '../types/attack'
+import { runAttack } from '../lib/interpreter'
+import type { AttackJSON } from '../lib/interpreter'
+import sliceJson from '../attacks/slice.json'
 import styles from './AnimationStage.module.css'
 
 // ─── Attack registry ──────────────────────────────────────────────────────────
@@ -152,7 +155,14 @@ function DiagRow({ k, v }: { k: string; v: string }) {
 // ─── Attack runner ────────────────────────────────────────────────────────────
 
 async function triggerAttack(app: any, id: string, animRef: React.MutableRefObject<boolean>) {
-  if (!app || animRef.current) return
+  if (!app) return
+
+  if (id === 'slice') {
+    runAttack(app, sliceJson as unknown as AttackJSON)
+    return
+  }
+
+  if (animRef.current) return
   const PIXI = await import('pixi.js')
   animRef.current = true
 
@@ -169,8 +179,8 @@ async function triggerAttack(app: any, id: string, animRef: React.MutableRefObje
   const config: AttackConfig = { ...DEFAULT_CONFIG, ...(def?.config ?? {}) }
 
   switch (id) {
-    case 'thrust': runThrust(app, PIXI, container, animRef, config); break
-    default:       runSlice(app, PIXI, container, animRef, config)
+    case 'thrust':   runThrust(app, PIXI, container, animRef, config); break
+    case 'diagonal': runSlice(app, PIXI, container, animRef, config);  break
   }
 }
 
