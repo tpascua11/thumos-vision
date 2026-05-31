@@ -22,6 +22,10 @@ const ATTACKS: AttackDefinition[] = [
     id: 'hslash', label: 'Horizontal Slash', tag: 'MELEE',
     config: {}
   },
+  {
+    id: 'side-hammer', label: 'Side Hammer', tag: 'MELEE',
+    config: {}
+  },
 ]
 
 const DEFAULT_CONFIG: AttackConfig = {
@@ -180,7 +184,8 @@ async function triggerAttack(app: any, id: string, animRef: React.MutableRefObje
   const config: AttackConfig = { ...DEFAULT_CONFIG, ...(def?.config ?? {}) }
 
   switch (id) {
-    case 'diagonal': runSlice(app, PIXI, container, animRef, config); break
+    case 'diagonal':    runSlice(app, PIXI, container, animRef, config);  break
+    case 'side-hammer': runThrust(app, PIXI, container, animRef, config); break
   }
 }
 
@@ -347,6 +352,113 @@ function runSlice(
     }
 
     if (arcDone && particles.length === 0 && flash.alpha <= 0) {
+      app.ticker.remove(tick)
+      app.stage.removeChild(flash)
+      animRef.current = false
+    }
+  })
+}
+
+// ─── SIDE HAMMER ──────────────────────────────────────────────────────────────
+
+function runThrust(
+  app: any, PIXI: any, container: any,
+  animRef: React.MutableRefObject<boolean>,
+  config: AttackConfig
+) {
+  const W  = app.screen.width
+  const H  = app.screen.height
+  const cx = W / 2
+  const cy = H / 2
+
+  const { arcDuration, IMPACT_T, trailColor, driftColor } = config
+  const thrustColor = trailColor
+  const sparkColor  = 0xffaa44
+
+  const longTex  = makeTex(PIXI, app, 20, 1.5)
+  const sparkTex = makeTex(PIXI, app, 3,  3)
+  const glowTex  = makeTex(PIXI, app, 24, 24)
+
+  const startX    = cx - 160
+  const particles: any[] = []
+  let   startTime: number | null = null
+  let   impactFired = false
+  let   done = false
+
+  const flash = new PIXI.Graphics()
+  flash.beginFill(0xffffff, 1); flash.drawRect(0, 0, W, H); flash.endFill()
+  flash.alpha = 0
+  app.stage.addChild(flash)
+
+  app.ticker.add(function tick(delta: number) {
+    const now      = performance.now()
+    if (!startTime) startTime = now
+    const elapsed  = now - startTime
+    const progress = Math.min(elapsed / arcDuration, 1)
+    const tipX     = startX + (cx - startX) * Math.min(progress / IMPACT_T, 1)
+
+    if (progress < IMPACT_T) {
+      for (let i = 0; i < 3; i++) {
+        const p: any = new PIXI.Sprite(longTex)
+        p.anchor.set(0.5)
+        p.x = tipX - Math.random() * 20; p.y = cy + (Math.random() - 0.5) * 6
+        p.tint = thrustColor; p.alpha = 0.7 + Math.random() * 0.3
+        p.scale.set(0.8 + Math.random() * 1.2, 0.5 + Math.random() * 0.5)
+        p.rotation = (Math.random() - 0.5) * 0.15
+        p._vx = -0.5 - Math.random() * 1.5; p._vy = (Math.random() - 0.5) * 0.3
+        p._life = 0; p._maxLife = 80 + Math.random() * 60; p._type = 'trail' as ParticleType
+        container.addChild(p); particles.push(p)
+      }
+    }
+
+    if (!impactFired && progress >= IMPACT_T) {
+      impactFired = true; flash.alpha = 0.18
+      for (let i = 0; i < 24; i++) {
+        const angle = (Math.PI * 2 / 24) * i + (Math.random() - 0.5) * 0.3
+        const bias  = Math.cos(angle) * 0.5 + 0.5
+        const speed = (1.5 + Math.random() * 3) * (0.5 + bias * 0.8)
+        const p: any = new PIXI.Sprite(i % 5 === 0 ? glowTex : longTex)
+        p.anchor.set(0.5)
+        p.x = cx + (Math.random() - 0.5) * 6; p.y = cy + (Math.random() - 0.5) * 6
+        p.tint = i % 4 === 0 ? 0xffffff : thrustColor; p.alpha = 0.9
+        p.scale.set(0.4 + Math.random() * 0.9); p.rotation = angle
+        p._vx = Math.cos(angle) * speed; p._vy = Math.sin(angle) * speed
+        p._life = 0; p._maxLife = 120 + Math.random() * 100; p._type = 'flash' as ParticleType
+        container.addChild(p); particles.push(p)
+      }
+      for (let i = 0; i < 6; i++) {
+        const p: any = new PIXI.Sprite(sparkTex)
+        p.anchor.set(0.5)
+        p.x = cx + (Math.random() - 0.5) * 20; p.y = cy + (Math.random() - 0.5) * 20
+        p.tint = sparkColor; p.alpha = 0.9; p.scale.set(0.6 + Math.random() * 0.8)
+        p._vx = (Math.random() - 0.3) * 1.5; p._vy = -0.5 - Math.random() * 1.0
+        p._life = 0; p._maxLife = 600 + Math.random() * 400; p._type = 'drift' as ParticleType
+        container.addChild(p); particles.push(p)
+      }
+    }
+
+    if (flash.alpha > 0) { flash.alpha -= 0.014 * delta; if (flash.alpha < 0) flash.alpha = 0 }
+    if (progress >= 1) done = true
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i]
+      p._life += app.ticker.deltaMS
+      const t = p._life / p._maxLife
+      if (t >= 1) { container.removeChild(p); particles.splice(i, 1); continue }
+      p.x += p._vx * delta; p.y += p._vy * delta
+      if (p._type === 'trail') {
+        p._vx *= 0.88; p._vy *= 0.88; p.alpha = (1 - t) * 0.8
+      } else if (p._type === 'flash') {
+        p._vx *= 0.90; p._vy *= 0.90
+        p.alpha = (1 - t) * (1 - t) * 0.9
+        p.scale.x *= 0.978; p.scale.y *= 0.978
+      } else if (p._type === 'drift') {
+        p._vy += 0.01 * delta
+        p.alpha = t < 0.15 ? (t / 0.15) * 0.8 : (1 - t) * 0.7
+      }
+    }
+
+    if (done && particles.length === 0 && flash.alpha <= 0) {
       app.ticker.remove(tick)
       app.stage.removeChild(flash)
       animRef.current = false
