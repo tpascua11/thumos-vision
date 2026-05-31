@@ -1,0 +1,92 @@
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 52px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brandMark {
+  color: var(--accent);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.brandName {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--text);
+}
+
+.brandSub {
+  color: var(--text3);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 18px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+
+.tab:hover {
+  color: var(--text);
+  border-color: var(--line2);
+}
+
+.tab.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(74, 240, 200, 0.05);
+}
+
+.tabTag {
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 0.05em;
+}
+
+.tab.active .tabTag {
+  color: var(--accent);
+  opacity: 0.6;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text3);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.metaDot { color: var(--text3); opacity: 0.4; }

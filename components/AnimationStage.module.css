@@ -1,0 +1,150 @@
+.stage {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  flex: 1;
+  min-height: 0;
+  height: calc(100vh - 52px - 41px);
+}
+
+.sidebar {
+  border-right: 1px solid var(--line);
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.sideSection {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sideLabel {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--text3);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.attackBtn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text2);
+  font-family: var(--mono);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s;
+  margin-bottom: 4px;
+  border-radius: 2px;
+}
+
+.attackBtn:hover {
+  background: var(--bg2);
+  border-color: var(--line2);
+  color: var(--text);
+}
+
+.attackActive {
+  background: rgba(74, 240, 200, 0.06) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+.attackTag {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+.attackActive .attackTag {
+  color: var(--accent);
+  opacity: 0.6;
+}
+
+.attackLabel {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.strikeBtn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+
+.strikeBtn:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.diagRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.diagKey {
+  color: var(--text3);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.diagVal {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.canvasWrap {
+  position: relative;
+  background: var(--bg);
+  cursor: crosshair;
+  overflow: hidden;
+}
+
+.canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text3);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+}
+
+.canvasLabel {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--text3);
+  text-transform: uppercase;
+  pointer-events: none;
+}
