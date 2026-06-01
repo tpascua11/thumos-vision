@@ -1,0 +1,37 @@
+{
+  id vertical_slice,
+  type arc,
+  element physical,
+
+  arc {
+    slashAngle 1.5708,
+    arcHalfSpan 0.38,
+    arcRadius 130,
+    duration 180,
+    steps 22
+  },
+
+  colors {
+    trail 0xddeeff,
+    drift  0x88ccff,
+    flash  0xffffff
+  },
+
+  textures {
+    slash { w 14, h 2 },
+    spark { w 3,  h 3 },
+    glow  { w 20, h 20 }
+  },
+
+  phases {
+    before { count 6, spread 10, speedMin 2.8, speedMax 6.0, drag 0.81, alphaMax 0.88, lifetimeMin 75,  lifetimeMax 130 },
+    after  { count 4, spread 28, speedMin 0.6, speedMax 2.0, drag 0.91, alphaMax 0.40, lifetimeMin 160, lifetimeMax 280 }
+  },
+
+  impact {
+    at 0.5,
+    screenFlash { alpha 0.20, fadeSpeed 0.013 },
+    burst { count 30, biased true, drag 0.91, scaleDecay 0.976, lifetimeMin 130, lifetimeMax 240 },
+    drift { count 7, gravityY -0.007, alphaMax 0.65, lifetimeMin 700, lifetimeMax 1100 }
+  }
+}

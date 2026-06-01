@@ -243,11 +243,6 @@ function runSlice(
   let   arcDone      = false
   let   lastStep     = -1
 
-  const flash = new PIXI.Graphics()
-  flash.beginFill(0xffffff, 1); flash.drawRect(0, 0, W, H); flash.endFill()
-  flash.alpha = 0
-  app.stage.addChild(flash)
-
   const spawnTrail = (pos: ArcPosition, nextPos: ArcPosition | undefined, phase: AttackPhase) => {
     const isBefore  = phase === 'before'
     const count     = isBefore ? 6 : 4
@@ -325,10 +320,7 @@ function runSlice(
     if (!impactFired && progress >= IMPACT_T) {
       impactFired = true
       spawnFlash(cx, cy); spawnDrift(cx, cy)
-      flash.alpha = 0.2
     }
-
-    if (flash.alpha > 0) { flash.alpha -= 0.013 * delta; if (flash.alpha < 0) flash.alpha = 0 }
     if (progress >= 1) arcDone = true
 
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -351,9 +343,8 @@ function runSlice(
       }
     }
 
-    if (arcDone && particles.length === 0 && flash.alpha <= 0) {
+    if (arcDone && particles.length === 0) {
       app.ticker.remove(tick)
-      app.stage.removeChild(flash)
       animRef.current = false
     }
   })
@@ -385,11 +376,6 @@ function runThrust(
   let   impactFired = false
   let   done = false
 
-  const flash = new PIXI.Graphics()
-  flash.beginFill(0xffffff, 1); flash.drawRect(0, 0, W, H); flash.endFill()
-  flash.alpha = 0
-  app.stage.addChild(flash)
-
   app.ticker.add(function tick(delta: number) {
     const now      = performance.now()
     if (!startTime) startTime = now
@@ -412,7 +398,7 @@ function runThrust(
     }
 
     if (!impactFired && progress >= IMPACT_T) {
-      impactFired = true; flash.alpha = 0.18
+      impactFired = true
       for (let i = 0; i < 24; i++) {
         const angle = (Math.PI * 2 / 24) * i + (Math.random() - 0.5) * 0.3
         const bias  = Math.cos(angle) * 0.5 + 0.5
@@ -437,7 +423,6 @@ function runThrust(
       }
     }
 
-    if (flash.alpha > 0) { flash.alpha -= 0.014 * delta; if (flash.alpha < 0) flash.alpha = 0 }
     if (progress >= 1) done = true
 
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -458,9 +443,8 @@ function runThrust(
       }
     }
 
-    if (done && particles.length === 0 && flash.alpha <= 0) {
+    if (done && particles.length === 0) {
       app.ticker.remove(tick)
-      app.stage.removeChild(flash)
       animRef.current = false
     }
   })

@@ -104,14 +104,6 @@ export async function runAttack(app: any, json: AttackJSON): Promise<void> {
   let arcDone      = false
   let lastStep     = -1
 
-  // Screen flash lives on stage (above the container) so it covers everything
-  const screenFlash = new PIXI.Graphics()
-  screenFlash.beginFill(0xffffff, 1)
-  screenFlash.drawRect(0, 0, W, H)
-  screenFlash.endFill()
-  screenFlash.alpha = 0
-  app.stage.addChild(screenFlash)
-
   // ── Spawners ──────────────────────────────────────────────────────────────────
 
   function spawnTrail(pos: any, nextPos: any, phase: 'before' | 'after') {
@@ -219,16 +211,9 @@ export async function runAttack(app: any, json: AttackJSON): Promise<void> {
 
     // Fire impact effects simultaneously at IMPACT_T
     if (!impactFired && progress >= IMPACT_T) {
-      impactFired       = true
-      screenFlash.alpha = impact.screenFlash.alpha
+      impactFired = true
       spawnBurst(cx, cy)
       spawnDrift(cx, cy)
-    }
-
-    // Fade screen flash
-    if (screenFlash.alpha > 0) {
-      screenFlash.alpha -= impact.screenFlash.fadeSpeed * delta
-      if (screenFlash.alpha < 0) screenFlash.alpha = 0
     }
 
     if (progress >= 1) arcDone = true
@@ -261,10 +246,8 @@ export async function runAttack(app: any, json: AttackJSON): Promise<void> {
       }
     }
 
-    // All work is done — remove ticker and flash overlay
-    if (arcDone && particles.length === 0 && screenFlash.alpha <= 0) {
+    if (arcDone && particles.length === 0) {
       app.ticker.remove(tick)
-      app.stage.removeChild(screenFlash)
     }
   })
 }
