@@ -163,9 +163,13 @@ export class ThumosInterpreter {
   // Fires all plays in an attack JSON simultaneously.
   // Each play uses its own offsetX/offsetY relative to (x, y).
   playAttack(json, x, y) {
-    json.plays.forEach(p => {
-      this.play(p, x + (p.offsetX ?? 0), y + (p.offsetY ?? 0));
-    });
+    if (json.plays) {
+      json.plays.forEach(p => {
+        this.play(p, x + (p.offsetX ?? 0), y + (p.offsetY ?? 0));
+      });
+    } else {
+      this.play(json, x, y);
+    }
   }
 
   // ── stop ──────────────────────────────────────────────────
