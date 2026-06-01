@@ -1,37 +1,106 @@
 {
   "id": "horizontal_slash",
-  "type": "arc",
-  "element": "physical",
 
-  "arc": {
-    "slashAngle": 3.141592653589793,
-    "arcHalfSpan": 0.52,
-    "arcRadius": 185,
-    "duration": 180,
-    "steps": 28
-  },
-
-  "colors": {
-    "trail": 14544639,
-    "drift":  8965375,
-    "flash": 16777215
-  },
-
-  "textures": {
-    "slash": { "w": 14, "h": 2 },
-    "spark": { "w": 3,  "h": 3 },
-    "glow":  { "w": 20, "h": 20 }
-  },
-
-  "phases": {
-    "before": { "count": 6, "spread": 10, "speedMin": 2.8, "speedMax": 6.0, "drag": 0.81, "alphaMax": 0.88, "lifetimeMin": 75,  "lifetimeMax": 130 },
-    "after":  { "count": 6, "spread": 10, "speedMin": 2.8, "speedMax": 6.0, "drag": 0.81, "alphaMax": 0.88, "lifetimeMin": 75,  "lifetimeMax": 130 }
+  "trail": {
+    "name": "horizontal_slash_trail",
+    "duration": 500,
+    "motion": {
+      "type": "arc",
+      "cx": -185,
+      "cy": 0,
+      "radius": 185,
+      "startAngle": -0.52,
+      "endAngle": 0.52,
+      "duration": 180
+    },
+    "emitters": [
+      {
+        "id": "trail_before",
+        "start": 0,
+        "end": 90,
+        "config": {
+          "lifetime": { "min": 0.07, "max": 0.13 },
+          "frequency": 0.004,
+          "maxParticles": 200,
+          "addAtBack": false,
+          "pos": { "x": 0, "y": 0 },
+          "behaviors": [
+            { "type": "alpha",       "config": { "alpha": { "list": [{ "value": 0.88, "time": 0 }, { "value": 0, "time": 1 }] } } },
+            { "type": "scale",       "config": { "scale": { "list": [{ "value": 1.5,  "time": 0 }, { "value": 0.4, "time": 1 }] }, "minMult": 0.5 } },
+            { "type": "color",       "config": { "color": { "list": [{ "value": "ddeeff", "time": 0 }, { "value": "ddeeff", "time": 1 }] } } },
+            { "type": "moveSpeed",   "config": { "speed": { "list": [{ "value": 250,  "time": 0 }, { "value": 20,  "time": 1 }] }, "minMult": 0.4 } },
+            { "type": "rotationStatic", "config": { "min": 0, "max": 360 } },
+            { "type": "textureSingle",  "config": { "texture": "slash" } }
+          ]
+        }
+      },
+      {
+        "id": "trail_after",
+        "start": 90,
+        "end": 180,
+        "config": {
+          "lifetime": { "min": 0.16, "max": 0.28 },
+          "frequency": 0.006,
+          "maxParticles": 150,
+          "addAtBack": false,
+          "pos": { "x": 0, "y": 0 },
+          "behaviors": [
+            { "type": "alpha",       "config": { "alpha": { "list": [{ "value": 0.40, "time": 0 }, { "value": 0, "time": 1 }] } } },
+            { "type": "scale",       "config": { "scale": { "list": [{ "value": 0.9,  "time": 0 }, { "value": 0.3, "time": 1 }] }, "minMult": 0.4 } },
+            { "type": "color",       "config": { "color": { "list": [{ "value": "ddeeff", "time": 0 }, { "value": "ddeeff", "time": 1 }] } } },
+            { "type": "moveSpeed",   "config": { "speed": { "list": [{ "value": 80,   "time": 0 }, { "value": 10,  "time": 1 }] }, "minMult": 0.3 } },
+            { "type": "rotationStatic", "config": { "min": 0, "max": 360 } },
+            { "type": "textureSingle",  "config": { "texture": "slash" } }
+          ]
+        }
+      }
+    ]
   },
 
   "impact": {
-    "at": 0.5,
-    "screenFlash": { "alpha": 0.20, "fadeSpeed": 0.013 },
-    "burst": { "count": 30, "biased": true, "drag": 0.91, "scaleDecay": 0.976, "lifetimeMin": 130, "lifetimeMax": 240 },
-    "drift": { "count": 7, "gravityY": -0.007, "alphaMax": 0.65, "lifetimeMin": 700, "lifetimeMax": 1100 }
+    "name": "horizontal_slash_impact",
+    "duration": 1300,
+    "emitters": [
+      {
+        "id": "burst",
+        "start": 90,
+        "end": 120,
+        "config": {
+          "lifetime": { "min": 0.13, "max": 0.24 },
+          "frequency": 0.001,
+          "maxParticles": 30,
+          "addAtBack": false,
+          "pos": { "x": 0, "y": 0 },
+          "behaviors": [
+            { "type": "alpha",       "config": { "alpha": { "list": [{ "value": 0.95, "time": 0 }, { "value": 0, "time": 1 }] } } },
+            { "type": "scale",       "config": { "scale": { "list": [{ "value": 1.2,  "time": 0 }, { "value": 0, "time": 1 }] }, "minMult": 0.3 } },
+            { "type": "color",       "config": { "color": { "list": [{ "value": "ddeeff", "time": 0 }, { "value": "ffffff", "time": 0.3 }, { "value": "ddeeff", "time": 1 }] } } },
+            { "type": "moveSpeed",   "config": { "speed": { "list": [{ "value": 300,  "time": 0 }, { "value": 30,  "time": 1 }] }, "minMult": 0.3 } },
+            { "type": "rotationStatic", "config": { "min": 0, "max": 360 } },
+            { "type": "textureSingle",  "config": { "texture": "slash" } }
+          ]
+        }
+      },
+      {
+        "id": "drift",
+        "start": 90,
+        "end": 97,
+        "config": {
+          "lifetime": { "min": 0.7, "max": 1.1 },
+          "frequency": 0.001,
+          "maxParticles": 7,
+          "addAtBack": false,
+          "pos": { "x": 0, "y": 0 },
+          "behaviors": [
+            { "type": "alpha",       "config": { "alpha": { "list": [{ "value": 0, "time": 0 }, { "value": 0.65, "time": 0.2 }, { "value": 0, "time": 1 }] } } },
+            { "type": "scale",       "config": { "scale": { "list": [{ "value": 0.8,  "time": 0 }, { "value": 0.4, "time": 1 }] }, "minMult": 0.6 } },
+            { "type": "color",       "config": { "color": { "list": [{ "value": "88ccff", "time": 0 }, { "value": "88ccff", "time": 1 }] } } },
+            { "type": "moveSpeed",   "config": { "speed": { "list": [{ "value": 60,   "time": 0 }, { "value": 10,  "time": 1 }] }, "minMult": 0.3 } },
+            { "type": "rotationStatic", "config": { "min": 225, "max": 315 } },
+            { "type": "textureSingle",  "config": { "texture": "spark" } }
+          ]
+        }
+      }
+    ]
   }
 }

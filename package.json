@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@pixi/particle-emitter": "^5.0.10",
     "next": "14.2.35",
     "pixi.js": "^7.4.3",
     "react": "^18",
@@ -18,6 +19,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "playwright": "^1.60.0",
     "typescript": "^5"
   }
 }

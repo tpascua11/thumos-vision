@@ -1,16 +1,16 @@
 {
-  "id": "vertical_slice",
+  "id": "diagonal_slash",
 
   "trail": {
-    "name": "vertical_slice_trail",
+    "name": "diagonal_slash_trail",
     "duration": 500,
     "motion": {
       "type": "arc",
-      "cx": 0,
-      "cy": 185,
+      "cx": 131,
+      "cy": 131,
       "radius": 185,
-      "startAngle": 4.192,
-      "endAngle": 5.233,
+      "startAngle": 3.407,
+      "endAngle": 4.447,
       "duration": 180
     },
     "emitters": [
@@ -58,7 +58,7 @@
   },
 
   "impact": {
-    "name": "vertical_slice_impact",
+    "name": "diagonal_slash_impact",
     "duration": 1300,
     "emitters": [
       {
