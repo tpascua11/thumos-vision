@@ -159,6 +159,15 @@ export class ThumosInterpreter {
     play.timers.push(setTimeout(cleanup, json.duration));
   }
 
+  // ── playAttack ────────────────────────────────────────────
+  // Fires all plays in an attack JSON simultaneously.
+  // Each play uses its own offsetX/offsetY relative to (x, y).
+  playAttack(json, x, y) {
+    json.plays.forEach(p => {
+      this.play(p, x + (p.offsetX ?? 0), y + (p.offsetY ?? 0));
+    });
+  }
+
   // ── stop ──────────────────────────────────────────────────
   // Stops ALL active plays immediately.
   stop() {

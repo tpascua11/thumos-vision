@@ -14,26 +14,25 @@ const FILES: Record<string, any> = {
   'side-hammer': hammerJson,
 }
 
-type Part = 'trail' | 'impact'
-
 export default function AnimationStage() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const appRef    = useRef<any>(null)
-  const interpRef = useRef<any>(null)
+  const canvasRef  = useRef<HTMLCanvasElement>(null)
+  const appRef     = useRef<any>(null)
+  const interpRef  = useRef<any>(null)
   const [ready,      setReady]      = useState(false)
   const [file,       setFile]       = useState('slice-base')
-  const [part,       setPart]       = useState<Part>('trail')
-  const [json,       setJson]       = useState(() => JSON.stringify((sliceJson as any).trail, null, 2))
+  const [playIndex,  setPlayIndex]  = useState(0)
+  const [json,       setJson]       = useState(() => JSON.stringify((sliceJson as any).plays[0], null, 2))
   const [parseError, setParseError] = useState<string | null>(null)
 
+  const currentFile = FILES[file] as any
+
   useEffect(() => {
-    const data = FILES[file] as any
-    const payload = data?.[part]
-    if (payload) {
-      setJson(JSON.stringify(payload, null, 2))
+    const play = currentFile?.plays?.[playIndex]
+    if (play) {
+      setJson(JSON.stringify(play, null, 2))
       setParseError(null)
     }
-  }, [file, part])
+  }, [file, playIndex])
 
   useEffect(() => {
     let app: any
@@ -59,23 +58,42 @@ export default function AnimationStage() {
     return () => { if (app) app.destroy(false) }
   }, [])
 
-  function play() {
+  function cx() { return appRef.current.screen.width  / 2 }
+  function cy() { return appRef.current.screen.height / 2 }
+
+  function playPart() {
     if (!appRef.current || !interpRef.current) return
     try {
       const parsed = JSON.parse(json)
       setParseError(null)
-      const cx = appRef.current.screen.width  / 2
-      const cy = appRef.current.screen.height / 2
       interpRef.current.stop()
-      interpRef.current.play(parsed, cx, cy)
+      interpRef.current.play(parsed, cx(), cy())
     } catch (e: any) {
       setParseError(e.message)
     }
   }
 
+  function playAll() {
+    if (!appRef.current || !interpRef.current) return
+    interpRef.current.stop()
+    interpRef.current.playAttack(currentFile, cx(), cy())
+  }
+
   function stop() {
     interpRef.current?.stop()
   }
+
+  function download() {
+    const blob = new Blob([JSON.stringify(currentFile, null, 2)], { type: 'application/json' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `${file}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const plays: any[] = currentFile?.plays ?? []
 
   return (
     <div className={styles.stage}>
@@ -86,21 +104,21 @@ export default function AnimationStage() {
           <select
             className={styles.select}
             value={file}
-            onChange={e => setFile(e.target.value)}
+            onChange={e => { setFile(e.target.value); setPlayIndex(0) }}
           >
             {Object.keys(FILES).map(k => <option key={k} value={k}>{k}</option>)}
           </select>
         </div>
 
         <div className={styles.sideSection}>
-          <div className={styles.sideLabel}>Part</div>
+          <div className={styles.sideLabel}>Play</div>
           <div className={styles.tabs}>
-            {(['trail', 'impact'] as Part[]).map(p => (
+            {plays.map((p, i) => (
               <button
-                key={p}
-                className={`${styles.tab} ${part === p ? styles.tabActive : ''}`}
-                onClick={() => setPart(p)}
-              >{p}</button>
+                key={i}
+                className={`${styles.tab} ${playIndex === i ? styles.tabActive : ''}`}
+                onClick={() => setPlayIndex(i)}
+              >{p.name}</button>
             ))}
           </div>
         </div>
@@ -117,16 +135,18 @@ export default function AnimationStage() {
         </div>
 
         <div className={styles.sideSection}>
-          <button className={styles.playBtn} onClick={play} disabled={!ready}>▶ PLAY</button>
-          <button className={styles.stopBtn} onClick={stop}  disabled={!ready}>■ STOP</button>
+          <button className={styles.playAllBtn} onClick={playAll} disabled={!ready}>▶▶ PLAY ALL</button>
+          <button className={styles.playBtn}    onClick={playPart} disabled={!ready}>▶ PLAY PART</button>
+          <button className={styles.stopBtn}    onClick={stop}     disabled={!ready}>■ STOP</button>
+          <button className={styles.downloadBtn} onClick={download}>↓ DOWNLOAD JSON</button>
         </div>
 
       </aside>
 
-      <div className={styles.canvasWrap} onClick={play}>
+      <div className={styles.canvasWrap} onClick={playAll}>
         <canvas ref={canvasRef} className={styles.canvas} />
         {!ready && <div className={styles.loading}><span>INITIALIZING ENGINE</span></div>}
-        <div className={styles.canvasLabel}>CLICK TO PLAY</div>
+        <div className={styles.canvasLabel}>CLICK TO PLAY ALL</div>
       </div>
     </div>
   )
