@@ -2,16 +2,26 @@
 import { useEffect, useRef, useState } from 'react'
 import styles from './AnimationStage.module.css'
 
-import sliceJson    from '../reference/slice-base.json'
-import hslashJson   from '../reference/h-slash.json'
-import diagonalJson from '../reference/diagonal.json'
-import hammerJson   from '../reference/side-hammer.json'
+import sliceJson       from '../reference/slice-base.json'
+import hslashJson      from '../reference/h-slash.json'
+import diagonalJson    from '../reference/diagonal.json'
+import hammerJson      from '../reference/side-hammer.json'
+import flameStrikeJson  from '../reference/flame_strike.json'
+import flameStrike2Json from '../reference/flame_strike_2.json'
+import flameStrike3Json from '../reference/flame_strike_3.json'
+import flameStrike5Json from '../reference/flame_strike_5.json'
+import sliceTrueJson    from '../reference/slice-true.json'
 
 const FILES: Record<string, any> = {
-  'slice-base':  sliceJson,
-  'h-slash':     hslashJson,
-  'diagonal':    diagonalJson,
-  'side-hammer': hammerJson,
+  'slice-base':     sliceJson,
+  'slice-true':     sliceTrueJson,
+  'h-slash':        hslashJson,
+  'diagonal':       diagonalJson,
+  'side-hammer':    hammerJson,
+  'flame_strike':   flameStrikeJson,
+  'flame_strike_2': flameStrike2Json,
+  'flame_strike_3': flameStrike3Json,
+  'flame_strike_5': flameStrike5Json,
 }
 
 export default function AnimationStage() {

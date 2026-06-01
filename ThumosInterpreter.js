@@ -102,7 +102,13 @@ export class ThumosInterpreter {
   // Optional json.motion: { dx, dy, duration } moves the container
   // from (x, y) to (x+dx, y+dy) over `duration` ms — comet/projectile effects.
   play(json, x, y) {
-    const play = { container: null, emitters: [], timers: [], tickerFn: null };
+    const play = { container: null, worldContainer: null, emitters: [], worldEmitters: [], timers: [], tickerFn: null };
+
+    // World-space container stays fixed at origin; trail emitters live here so
+    // already-born particles don't move when the comet container translates.
+    const worldContainer = new PIXI.Container();
+    this._app.stage.addChild(worldContainer);
+    play.worldContainer = worldContainer;
 
     const container = new PIXI.Container();
     container.x = x;
@@ -112,14 +118,35 @@ export class ThumosInterpreter {
     this._activePlays.push(play);
 
     const cleanup = () => this._cleanupPlay(play);
+    const motionStart = performance.now();
+    const motion = json.motion ?? null;
+
+    const getCometPos = (now) => {
+      if (!motion) return { cx: x, cy: y };
+      const t = Math.min((now - motionStart) / motion.duration, 1);
+      if (motion.type === 'arc') {
+        const angle = motion.startAngle + (motion.endAngle - motion.startAngle) * t;
+        return { cx: x + motion.cx + Math.cos(angle) * motion.radius,
+                 cy: y + motion.cy + Math.sin(angle) * motion.radius };
+      }
+      return { cx: x + motion.dx * t, cy: y + motion.dy * t };
+    };
 
     // Start each emitter at its scheduled start time.
     json.emitters.forEach(emitterDef => {
       const startTimer = setTimeout(() => {
         const resolvedConfig = this._resolveConfig(emitterDef.config);
-        const emitter = new Emitter(container, resolvedConfig);
+        const isWorld = !!emitterDef.worldSpace;
+        const parent  = isWorld ? worldContainer : container;
+        const emitter = new Emitter(parent, resolvedConfig);
         emitter.emit = true;
         play.emitters.push(emitter);
+
+        if (isWorld) {
+          const { cx, cy } = getCometPos(performance.now());
+          emitter.spawnPos.set(cx, cy);
+          play.worldEmitters.push(emitter);
+        }
 
         const stopTimer = setTimeout(() => {
           emitter.emit = false;
@@ -132,8 +159,6 @@ export class ThumosInterpreter {
     });
 
     // Tick this play's emitters every frame, and handle motion.
-    const motionStart = performance.now();
-    const motion = json.motion ?? null;
     let last = motionStart;
     play.tickerFn = () => {
       const now = performance.now();
@@ -142,15 +167,13 @@ export class ThumosInterpreter {
       play.emitters.forEach(e => { try { e.update(elapsed); } catch {} });
 
       if (motion && play.container) {
-        const t = Math.min((now - motionStart) / motion.duration, 1);
-        if (motion.type === 'arc') {
-          const angle = motion.startAngle + (motion.endAngle - motion.startAngle) * t;
-          play.container.x = x + motion.cx + Math.cos(angle) * motion.radius;
-          play.container.y = y + motion.cy + Math.sin(angle) * motion.radius;
-        } else {
-          play.container.x = x + motion.dx * t;
-          play.container.y = y + motion.dy * t;
-        }
+        const { cx, cy } = getCometPos(now);
+        play.container.x = cx;
+        play.container.y = cy;
+
+        play.worldEmitters.forEach(e => {
+          if (e.emit) e.spawnPos.set(cx, cy);
+        });
       }
     };
     this._app.ticker.add(play.tickerFn);
@@ -191,6 +214,12 @@ export class ThumosInterpreter {
 
     play.emitters.forEach(e => e.destroy());
     play.emitters = [];
+
+    if (play.worldContainer) {
+      this._app.stage.removeChild(play.worldContainer);
+      play.worldContainer.destroy({ children: true });
+      play.worldContainer = null;
+    }
 
     if (play.container) {
       this._app.stage.removeChild(play.container);
