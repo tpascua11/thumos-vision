@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Thumos Vision
 
-## Getting Started
+A visual studio for designing and previewing RPG combat particle effects. Built to author attack animations as JSON configs that can be played back in a game engine via the shared `ThumosInterpreter`.
 
-First, run the development server:
+## What this is
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Thumos Vision is a browser-based sandbox where you write JSON, hit play, and watch particle effects fire on a canvas. The goal is to build a library of reusable attack animations — sword swings, projectiles, impact bursts — that are fully described by data, not code.
+
+Each attack is a JSON file in `reference/`. Once it looks right here, the same JSON drops straight into the game.
+
+## How it works
+
+The core is `ThumosInterpreter` — a standalone class that takes an attack JSON and plays it using `@pixi/particle-emitter` on a PixiJS canvas. It handles:
+
+- **Emitter scheduling** — each emitter has a `start` and `end` time in ms
+- **Motion** — moves the emitter along a straight path (`dx/dy`) or an arc (`type: "arc"`) over a given duration
+- **World-space trails** — emitters with `"worldSpace": true` stay fixed in world space while the comet moves, so particles left behind don't slide with the projectile
+
+`ThumosInterpreter` is shared with the game (`daq-game`). Its public API (`play`, `stop`, `playAttack`) and the flat JSON format must stay stable.
+
+## Attack JSON format
+
+```json
+{
+  "name": "my_attack",
+  "duration": 2000,
+  "motion": { "dx": 0, "dy": -220, "duration": 300 },
+  "emitters": [
+    {
+      "id": "fire_trail",
+      "start": 0,
+      "end": 300,
+      "worldSpace": true,
+      "config": { }
+    }
+  ]
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For multi-part attacks, wrap in a `plays` array with per-play `offsetX`/`offsetY`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```json
+{
+  "name": "my_attack",
+  "plays": [
+    { "offsetX": 0, "offsetY": 100, "duration": 2000, "motion": { ... }, "emitters": [ ... ] }
+  ]
+}
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Motion types
 
-## Learn More
+**Linear** (default): moves from spawn point by `(dx, dy)` over `duration` ms.
 
-To learn more about Next.js, take a look at the following resources:
+```json
+{ "dx": 0, "dy": -220, "duration": 300 }
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Arc**: sweeps along a circle — good for sword swings.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```json
+{ "type": "arc", "cx": 0, "cy": 0, "radius": 180, "startAngle": -2.2, "endAngle": 0.6, "duration": 90 }
+```
 
-## Deploy on Vercel
+Angles are in radians. `cx/cy` offsets the arc center from the spawn point.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Built-in textures
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Name | Shape |
+|------|-------|
+| `square` | 24×24 square |
+| `circle` | 16px radius circle |
+| `spark` | 1.5px dot |
+| `slash` | thin horizontal ellipse |
+| `glow` | 10px soft circle |
+
+## Studio
+
+The studio (`localhost:3000`) has a file picker, a live JSON editor, and a canvas. Click the canvas or hit **Play** to fire the selected attack. Edit the JSON directly and play again to iterate — no save step needed.
+
+## Running locally
+
+```bash
+npm install
+npm run dev
+```
+
+Opens at `http://localhost:3000`.
+
+## Stack
+
+- Next.js 14 (App Router)
+- PixiJS 7
+- @pixi/particle-emitter v5
+- TypeScript
