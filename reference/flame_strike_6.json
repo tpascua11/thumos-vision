@@ -1,17 +1,17 @@
 {
-  "name": "flame_strike_5",
+  "name": "flame_strike_6",
   "plays": [
     {
       "offsetX": 0,
-      "offsetY": 30,
+      "offsetY": 0,
       "duration": 2200,
       "motion": {
         "type": "arc",
         "cx": 0,
         "cy": 0,
-        "radius": 180,
-        "startAngle": -2.2,
-        "endAngle": 0.6,
+        "radius": 220,
+        "startAngle": -3.14159,
+        "endAngle": 0,
         "duration": 120
       },
       "emitters": [
@@ -94,8 +94,9 @@
         },
         {
           "id": "impact_burst",
-          "start": 110,
-          "end": 250,
+          "start": 60,
+          "end": 200,
+          "worldSpaceFixed": true,
           "config": {
             "lifetime": { "min": 0.3, "max": 0.6 },
             "frequency": 0.002,
