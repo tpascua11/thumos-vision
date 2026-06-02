@@ -1,5 +1,5 @@
 {
-  "name": "flame_strike_7",
+  "name": "flame_strike_9",
   "plays": [
     {
       "offsetX": 0,
@@ -7,11 +7,11 @@
       "duration": 2200,
       "motion": {
         "type": "arc",
-        "cx": 0,
-        "cy": 220,
-        "radius": 220,
-        "startAngle": -3.14159,
-        "endAngle": 0,
+        "cx": -130,
+        "cy": -75,
+        "radius": 150,
+        "startAngle": -2.094,
+        "endAngle": 0.524,
         "duration": 120
       },
       "emitters": [
@@ -20,7 +20,6 @@
           "start": 0,
           "end": 120,
           "worldSpace": true,
-          "oppositeTravel": true,
           "config": {
             "lifetime": { "min": 1.5, "max": 2.5 },
             "frequency": 0.001,
@@ -103,8 +102,9 @@
       "emitters": [
         {
           "id": "impact_burst",
-          "start": 60,
-          "end": 200,
+          "start": 110,
+          "end": 250,
+          "startRotation": { "min": -190, "max": -110 },
           "config": {
             "lifetime": { "min": 0.3, "max": 0.6 },
             "frequency": 0.002,

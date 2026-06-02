@@ -1,0 +1,108 @@
+{
+  "id": "base_slice",
+  "plays": [
+    {
+      "name": "comet",
+      "offsetX": -120,
+      "offsetY": -60,
+      "duration": 700,
+      "motion": {
+        "dx": 240,
+        "dy": 120,
+        "duration": 200
+      },
+      "emitters": [
+        {
+          "id": "head",
+          "start": 0,
+          "end": 200,
+          "config": {
+            "lifetime": { "min": 0.05, "max": 0.10 },
+            "frequency": 0.004,
+            "maxParticles": 60,
+            "addAtBack": false,
+            "pos": { "x": 0, "y": 0 },
+            "behaviors": [
+              { "type": "alpha",          "config": { "alpha": { "list": [{ "value": 1.0, "time": 0 }, { "value": 0, "time": 1 }] } } },
+              { "type": "scale",          "config": { "scale": { "list": [{ "value": 2.5, "time": 0 }, { "value": 0.5, "time": 1 }] }, "minMult": 0.5 } },
+              { "type": "color",          "config": { "color": { "list": [{ "value": "ffffff", "time": 0 }, { "value": "ddeeff", "time": 1 }] } } },
+              { "type": "moveSpeed",      "config": { "speed": { "list": [{ "value": 40, "time": 0 }, { "value": 10, "time": 1 }] }, "minMult": 0.2 } },
+              { "type": "rotationStatic", "config": { "min": 0, "max": 360 } },
+              { "type": "textureSingle",  "config": { "texture": "slash" } }
+            ]
+          }
+        },
+        {
+          "id": "trail",
+          "start": 0,
+          "end": 200,
+          "worldSpace": true,
+          "oppositeTravel": true,
+          "config": {
+            "lifetime": { "min": 0.20, "max": 0.40 },
+            "frequency": 0.005,
+            "maxParticles": 80,
+            "addAtBack": false,
+            "pos": { "x": 0, "y": 0 },
+            "behaviors": [
+              { "type": "alpha",          "config": { "alpha": { "list": [{ "value": 0.85, "time": 0 }, { "value": 0, "time": 1 }] } } },
+              { "type": "scale",          "config": { "scale": { "list": [{ "value": 1.1, "time": 0 }, { "value": 0.3, "time": 1 }] }, "minMult": 0.4 } },
+              { "type": "color",          "config": { "color": { "list": [{ "value": "ddeeff", "time": 0 }, { "value": "ddeeff", "time": 1 }] } } },
+              { "type": "moveSpeed",      "config": { "speed": { "list": [{ "value": 30, "time": 0 }, { "value": 5, "time": 1 }] }, "minMult": 0.3 } },
+              { "type": "rotationStatic", "config": { "min": 0, "max": 360 } },
+              { "type": "textureSingle",  "config": { "texture": "slash" } }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "impact",
+      "offsetX": 120,
+      "offsetY": 60,
+      "duration": 800,
+      "emitters": [
+        {
+          "id": "burst",
+          "start": 200,
+          "end": 230,
+          "config": {
+            "lifetime": { "min": 0.10, "max": 0.22 },
+            "frequency": 0.001,
+            "maxParticles": 28,
+            "addAtBack": false,
+            "pos": { "x": 0, "y": 0 },
+            "behaviors": [
+              { "type": "alpha",          "config": { "alpha": { "list": [{ "value": 1.0, "time": 0 }, { "value": 0, "time": 1 }] } } },
+              { "type": "scale",          "config": { "scale": { "list": [{ "value": 1.6, "time": 0 }, { "value": 0, "time": 1 }] }, "minMult": 0.3 } },
+              { "type": "color",          "config": { "color": { "list": [{ "value": "ffffff", "time": 0 }, { "value": "ddeeff", "time": 1 }] } } },
+              { "type": "moveSpeed",      "config": { "speed": { "list": [{ "value": 280, "time": 0 }, { "value": 20, "time": 1 }] }, "minMult": 0.3 } },
+              { "type": "rotationStatic", "config": { "min": 0, "max": 360 } },
+              { "type": "textureSingle",  "config": { "texture": "slash" } }
+            ]
+          }
+        },
+        {
+          "id": "drift",
+          "start": 200,
+          "end": 210,
+          "config": {
+            "lifetime": { "min": 0.5, "max": 1.0 },
+            "frequency": 0.001,
+            "maxParticles": 7,
+            "addAtBack": false,
+            "pos": { "x": 0, "y": 0 },
+            "behaviors": [
+              { "type": "alpha",          "config": { "alpha": { "list": [{ "value": 0, "time": 0 }, { "value": 0.7, "time": 0.15 }, { "value": 0, "time": 1 }] } } },
+              { "type": "scale",          "config": { "scale": { "list": [{ "value": 0.8, "time": 0 }, { "value": 0.3, "time": 1 }] }, "minMult": 0.5 } },
+              { "type": "color",          "config": { "color": { "list": [{ "value": "88ccff", "time": 0 }, { "value": "88ccff", "time": 1 }] } } },
+              { "type": "moveSpeed",      "config": { "speed": { "list": [{ "value": 50, "time": 0 }, { "value": 8, "time": 1 }] }, "minMult": 0.3 } },
+              { "type": "rotationStatic", "config": { "min": 0, "max": 360 } },
+              { "type": "textureSingle",  "config": { "texture": "spark" } }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

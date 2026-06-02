@@ -30,6 +30,19 @@
 import { Emitter } from '@pixi/particle-emitter';
 import * as PIXI from 'pixi.js';
 
+function lerpKeyframes(list, t) {
+  if (t <= list[0].time) return list[0].value;
+  if (t >= list[list.length - 1].time) return list[list.length - 1].value;
+  for (let i = 0; i < list.length - 1; i++) {
+    if (t >= list[i].time && t <= list[i + 1].time) {
+      const span = list[i + 1].time - list[i].time;
+      const local = span === 0 ? 1 : (t - list[i].time) / span;
+      return list[i].value + (list[i + 1].value - list[i].value) * local;
+    }
+  }
+  return list[list.length - 1].value;
+}
+
 export class ThumosInterpreter {
   constructor(app) {
     this._app = app;
@@ -70,7 +83,7 @@ export class ThumosInterpreter {
 
     g.clear();
     g.beginFill(0xffffff);
-    g.drawCircle(0, 0, 10);
+    g.drawCircle(0, 0, 64);
     g.endFill();
     this._textureMap['glow'] = this._app.renderer.generateTexture(g);
 
@@ -102,7 +115,7 @@ export class ThumosInterpreter {
   // Optional json.motion: { dx, dy, duration } moves the container
   // from (x, y) to (x+dx, y+dy) over `duration` ms — comet/projectile effects.
   play(json, x, y) {
-    const play = { container: null, worldContainer: null, emitters: [], worldEmitters: [], timers: [], tickerFn: null };
+    const play = { container: null, worldContainer: null, emitters: [], worldEmitters: [], oppositeEmitters: [], graphicsObjects: [], timers: [], tickerFn: null };
 
     // World-space container stays fixed at origin; trail emitters live here so
     // already-born particles don't move when the comet container translates.
@@ -132,8 +145,32 @@ export class ThumosInterpreter {
       return { cx: x + motion.dx * t, cy: y + motion.dy * t };
     };
 
+    // Start each graphics object at its scheduled start time.
+    (json.graphics ?? []).forEach(gDef => {
+      const startTimer = setTimeout(() => {
+        const g = new PIXI.Graphics();
+        const color = gDef.fill ? parseInt(gDef.fill, 16) : 0xffffff;
+        if (gDef.shape === 'circle') {
+          g.beginFill(color);
+          g.drawCircle(0, 0, gDef.radius ?? 20);
+          g.endFill();
+        } else if (gDef.shape === 'ring') {
+          g.lineStyle(gDef.thickness ?? 2, color);
+          g.drawCircle(0, 0, gDef.radius ?? 20);
+        } else if (gDef.shape === 'fist') {
+          g.beginFill(color);
+          g.drawRoundedRect(-26, -4, 14, 18, 5);  // thumb
+          g.drawRoundedRect(-18, -16, 36, 26, 5); // knuckle block
+          g.endFill();
+        }
+        container.addChild(g);
+        play.graphicsObjects.push({ g, born: performance.now(), duration: gDef.duration, def: gDef });
+      }, gDef.start);
+      play.timers.push(startTimer);
+    });
+
     // Start each emitter at its scheduled start time.
-    json.emitters.forEach(emitterDef => {
+    (json.emitters ?? []).forEach(emitterDef => {
       const startTimer = setTimeout(() => {
         const resolvedConfig = this._resolveConfig(emitterDef.config);
         const isWorld = !!emitterDef.worldSpace;
@@ -146,6 +183,15 @@ export class ThumosInterpreter {
           const { cx, cy } = getCometPos(performance.now());
           emitter.spawnPos.set(cx, cy);
           play.worldEmitters.push(emitter);
+        }
+
+        if (emitterDef.oppositeTravel) {
+          play.oppositeEmitters.push(emitter);
+        }
+
+        if (emitterDef.startRotation) {
+          emitter.minStartRotation = emitterDef.startRotation.min;
+          emitter.maxStartRotation = emitterDef.startRotation.max;
         }
 
         const stopTimer = setTimeout(() => {
@@ -166,6 +212,14 @@ export class ThumosInterpreter {
       last = now;
       play.emitters.forEach(e => { try { e.update(elapsed); } catch {} });
 
+      play.graphicsObjects = play.graphicsObjects.filter(({ g, born, duration, def }) => {
+        const t = Math.min((now - born) / duration, 1);
+        if (def.alpha) g.alpha = lerpKeyframes(def.alpha, t);
+        if (def.scale) { const s = lerpKeyframes(def.scale, t); g.scale.set(s); }
+        if (t >= 1) { try { g.destroy(); } catch {} return false; }
+        return true;
+      });
+
       if (motion && play.container) {
         const { cx, cy } = getCometPos(now);
         play.container.x = cx;
@@ -174,6 +228,23 @@ export class ThumosInterpreter {
         play.worldEmitters.forEach(e => {
           if (e.emit) e.spawnPos.set(cx, cy);
         });
+
+        if (play.oppositeEmitters.length > 0) {
+          const t2 = Math.min((now - motionStart) / motion.duration, 1);
+          let oppAngle;
+          if (motion.type === 'arc') {
+            const angle = motion.startAngle + (motion.endAngle - motion.startAngle) * t2;
+            oppAngle = Math.atan2(-Math.cos(angle), Math.sin(angle));
+          } else {
+            oppAngle = Math.atan2(-motion.dy, -motion.dx);
+          }
+          const oppDeg = oppAngle * (180 / Math.PI);
+          const spread = 20;
+          play.oppositeEmitters.forEach(e => {
+            e.minStartRotation = oppDeg - spread;
+            e.maxStartRotation = oppDeg + spread;
+          });
+        }
       }
     };
     this._app.ticker.add(play.tickerFn);
@@ -214,6 +285,9 @@ export class ThumosInterpreter {
 
     play.emitters.forEach(e => e.destroy());
     play.emitters = [];
+
+    play.graphicsObjects.forEach(({ g }) => { try { g.destroy(); } catch {} });
+    play.graphicsObjects = [];
 
     if (play.worldContainer) {
       this._app.stage.removeChild(play.worldContainer);

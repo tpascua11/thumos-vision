@@ -1,5 +1,5 @@
 {
-  "name": "flame_strike_7",
+  "name": "flame_strike_8",
   "plays": [
     {
       "offsetX": 0,
@@ -10,8 +10,8 @@
         "cx": 0,
         "cy": 220,
         "radius": 220,
-        "startAngle": -3.14159,
-        "endAngle": 0,
+        "startAngle": -2.35619,
+        "endAngle": -0.78540,
         "duration": 120
       },
       "emitters": [

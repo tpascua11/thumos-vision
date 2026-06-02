@@ -1,17 +1,17 @@
 {
-  "name": "flame_strike_7",
+  "name": "true_flame_strike",
   "plays": [
     {
-      "offsetX": 0,
-      "offsetY": 0,
+      "offsetX": -168,
+      "offsetY": -65,
       "duration": 2200,
       "motion": {
         "type": "arc",
         "cx": 0,
-        "cy": 220,
-        "radius": 220,
-        "startAngle": -3.14159,
-        "endAngle": 0,
+        "cy": 0,
+        "radius": 180,
+        "startAngle": -2.2,
+        "endAngle": 0.6,
         "duration": 120
       },
       "emitters": [
@@ -20,11 +20,10 @@
           "start": 0,
           "end": 120,
           "worldSpace": true,
-          "oppositeTravel": true,
           "config": {
             "lifetime": { "min": 1.5, "max": 2.5 },
-            "frequency": 0.001,
-            "maxParticles": 600,
+            "frequency": 0.003,
+            "maxParticles": 300,
             "addAtBack": true,
             "pos": { "x": 0, "y": 0 },
             "behaviors": [
@@ -56,9 +55,8 @@
                 "config": {
                   "color": {
                     "list": [
-                      { "value": "ffffff", "time": 0 },
-                      { "value": "ff8800", "time": 0.2 },
-                      { "value": "ff3300", "time": 0.6 },
+                      { "value": "ff8800", "time": 0 },
+                      { "value": "ff3300", "time": 0.5 },
                       { "value": "220000", "time": 1 }
                     ]
                   }
@@ -93,18 +91,11 @@
               }
             ]
           }
-        }
-      ]
-    },
-    {
-      "offsetX": 0,
-      "offsetY": 0,
-      "duration": 800,
-      "emitters": [
+        },
         {
           "id": "impact_burst",
-          "start": 60,
-          "end": 200,
+          "start": 110,
+          "end": 250,
           "config": {
             "lifetime": { "min": 0.3, "max": 0.6 },
             "frequency": 0.002,

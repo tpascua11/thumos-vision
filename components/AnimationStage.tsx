@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import styles from './AnimationStage.module.css'
 
+import baseSliceJson   from '../reference/base_slice.json'
 import sliceJson       from '../reference/slice-base.json'
 import hslashJson      from '../reference/h-slash.json'
 import diagonalJson    from '../reference/diagonal.json'
@@ -12,9 +13,15 @@ import flameStrike3Json from '../reference/flame_strike_3.json'
 import flameStrike5Json from '../reference/flame_strike_5.json'
 import flameStrike6Json from '../reference/flame_strike_6.json'
 import flameStrike7Json from '../reference/flame_strike_7.json'
+import flameStrike8Json      from '../reference/flame_strike_8.json'
+import trueFlameStrikeJson   from '../reference/true_flame_strike.json'
+import flameStrike9Json      from '../reference/flame_strike_9.json'
 import sliceTrueJson    from '../reference/slice-true.json'
+import punchV1Json      from '../reference/punch_v1.json'
+import punchV2Json      from '../reference/punch_v2.json'
 
 const FILES: Record<string, any> = {
+  'base_slice':     baseSliceJson,
   'slice-base':     sliceJson,
   'slice-true':     sliceTrueJson,
   'h-slash':        hslashJson,
@@ -26,6 +33,11 @@ const FILES: Record<string, any> = {
   'flame_strike_5': flameStrike5Json,
   'flame_strike_6': flameStrike6Json,
   'flame_strike_7': flameStrike7Json,
+  'flame_strike_8':    flameStrike8Json,
+  'true_flame_strike': trueFlameStrikeJson,
+  'flame_strike_9':    flameStrike9Json,
+  'punch_v1':          punchV1Json,
+  'punch_v2':          punchV2Json,
 }
 
 export default function AnimationStage() {
