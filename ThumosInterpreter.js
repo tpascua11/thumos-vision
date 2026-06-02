@@ -1,306 +1,84 @@
-// ============================================================
-//  ThumosInterpreter
-//  Reads a Thumos animation JSON config and plays particle
-//  effects using @pixi/particle-emitter + PixiJS.
-//
-//  Designed to be shared between daq-game and Thumos Vision.
-//  No app-specific imports — safe to extract as a standalone
-//  npm package (thumos-interpreter) with zero code changes.
-//
-//  JSON shape:
-//  {
-//    name: string,
-//    duration: number,          // total animation length in ms
-//    motion?: {                 // optional — moves the entire effect over time
-//      dx: number,              // x offset from spawn point
-//      dy: number,              // y offset from spawn point
-//      duration: number         // ms to travel from origin to (dx, dy)
-//    },
-//    emitters: [
-//      {
-//        id: string,
-//        start: number,         // ms from play() call
-//        end: number,           // ms — emitter stops emitting
-//        config: { ... }        // @pixi/particle-emitter config
-//      }
-//    ]
-//  }
-// ============================================================
-
 import { Emitter } from '@pixi/particle-emitter';
 import * as PIXI from 'pixi.js';
-
-function lerpKeyframes(list, t) {
-  if (t <= list[0].time) return list[0].value;
-  if (t >= list[list.length - 1].time) return list[list.length - 1].value;
-  for (let i = 0; i < list.length - 1; i++) {
-    if (t >= list[i].time && t <= list[i + 1].time) {
-      const span = list[i + 1].time - list[i].time;
-      const local = span === 0 ? 1 : (t - list[i].time) / span;
-      return list[i].value + (list[i + 1].value - list[i].value) * local;
-    }
-  }
-  return list[list.length - 1].value;
-}
 
 export class ThumosInterpreter {
   constructor(app) {
     this._app = app;
-    this._textureMap = {};
-    this._buildDefaultTextures();
-    // Each entry: { container, emitters, timers, tickerFn }
-    this._activePlays = [];
+    this._textures = {};
+    this._active = null;
+    this._buildTextures();
   }
 
-  // Generates built-in PIXI.Texture objects keyed by name.
-  // JSON configs reference these by name in textureSingle behavior.
-  // Bypasses Pixi's global texture cache to avoid string-lookup issues.
-  _buildDefaultTextures() {
+  _buildTextures() {
     const g = new PIXI.Graphics();
 
-    g.beginFill(0xffffff);
-    g.drawCircle(0, 0, 16);
-    g.endFill();
-    this._textureMap['circle'] = this._app.renderer.generateTexture(g);
+    g.beginFill(0xffffff); g.drawCircle(0, 0, 16); g.endFill();
+    this._textures['circle'] = this._app.renderer.generateTexture(g);
 
-    g.clear();
-    g.beginFill(0xffffff);
-    g.drawRect(-12, -12, 24, 24);
-    g.endFill();
-    this._textureMap['square'] = this._app.renderer.generateTexture(g);
+    g.clear(); g.beginFill(0xffffff); g.drawRect(-12, -12, 24, 24); g.endFill();
+    this._textures['square'] = this._app.renderer.generateTexture(g);
 
-    g.clear();
-    g.beginFill(0xffffff);
-    g.drawEllipse(0, 0, 7, 1);
-    g.endFill();
-    this._textureMap['slash'] = this._app.renderer.generateTexture(g);
+    g.clear(); g.beginFill(0xffffff); g.drawEllipse(0, 0, 7, 1); g.endFill();
+    this._textures['slash'] = this._app.renderer.generateTexture(g);
 
-    g.clear();
-    g.beginFill(0xffffff);
-    g.drawCircle(0, 0, 1.5);
-    g.endFill();
-    this._textureMap['spark'] = this._app.renderer.generateTexture(g);
+    g.clear(); g.beginFill(0xffffff); g.drawCircle(0, 0, 1.5); g.endFill();
+    this._textures['spark'] = this._app.renderer.generateTexture(g);
 
-    g.clear();
-    g.beginFill(0xffffff);
-    g.drawCircle(0, 0, 64);
-    g.endFill();
-    this._textureMap['glow'] = this._app.renderer.generateTexture(g);
+    g.clear(); g.beginFill(0xffffff); g.drawCircle(0, 0, 64); g.endFill();
+    this._textures['glow'] = this._app.renderer.generateTexture(g);
 
     g.destroy();
   }
 
-  // Replaces texture string references in a behavior config with actual
-  // PIXI.Texture objects so @pixi/particle-emitter doesn't do a URL lookup.
   _resolveConfig(config) {
     const resolved = JSON.parse(JSON.stringify(config));
     resolved.behaviors = resolved.behaviors.map(b => {
       if (b.type === 'textureSingle' && typeof b.config.texture === 'string') {
-        const tex = this._textureMap[b.config.texture];
+        const tex = this._textures[b.config.texture];
         if (tex) b.config.texture = tex;
-      }
-      if (b.type === 'textureRandom' && Array.isArray(b.config.textures)) {
-        b.config.textures = b.config.textures.map(t =>
-          typeof t === 'string' ? (this._textureMap[t] ?? t) : t
-        );
       }
       return b;
     });
     return resolved;
   }
 
-  // ── play ──────────────────────────────────────────────────
-  // Starts a new independent play — does NOT cancel any currently
-  // running animations. Each call gets its own container and lifecycle.
-  // Optional json.motion: { dx, dy, duration } moves the container
-  // from (x, y) to (x+dx, y+dy) over `duration` ms — comet/projectile effects.
+  // json shape: { duration, emitDuration, emitter: { ...pixi emitter config } }
+  // emitDuration — how long to spawn particles (ms). defaults to 100.
+  // duration     — total lifetime before cleanup (ms). should be >= emitDuration + max particle lifetime.
   play(json, x, y) {
-    const play = { container: null, worldContainer: null, emitters: [], worldEmitters: [], oppositeEmitters: [], graphicsObjects: [], timers: [], tickerFn: null };
-
-    // World-space container stays fixed at origin; trail emitters live here so
-    // already-born particles don't move when the comet container translates.
-    const worldContainer = new PIXI.Container();
-    this._app.stage.addChild(worldContainer);
-    play.worldContainer = worldContainer;
+    this.stop();
 
     const container = new PIXI.Container();
     container.x = x;
     container.y = y;
     this._app.stage.addChild(container);
-    play.container = container;
-    this._activePlays.push(play);
 
-    const cleanup = () => this._cleanupPlay(play);
-    const motionStart = performance.now();
-    const motion = json.motion ?? null;
+    const emitter = new Emitter(container, this._resolveConfig(json.emitter));
+    emitter.emit = true;
 
-    const getCometPos = (now) => {
-      if (!motion) return { cx: x, cy: y };
-      const t = Math.min((now - motionStart) / motion.duration, 1);
-      if (motion.type === 'arc') {
-        const angle = motion.startAngle + (motion.endAngle - motion.startAngle) * t;
-        return { cx: x + motion.cx + Math.cos(angle) * motion.radius,
-                 cy: y + motion.cy + Math.sin(angle) * motion.radius };
-      }
-      return { cx: x + motion.dx * t, cy: y + motion.dy * t };
-    };
-
-    // Start each graphics object at its scheduled start time.
-    (json.graphics ?? []).forEach(gDef => {
-      const startTimer = setTimeout(() => {
-        const g = new PIXI.Graphics();
-        const color = gDef.fill ? parseInt(gDef.fill, 16) : 0xffffff;
-        if (gDef.shape === 'circle') {
-          g.beginFill(color);
-          g.drawCircle(0, 0, gDef.radius ?? 20);
-          g.endFill();
-        } else if (gDef.shape === 'ring') {
-          g.lineStyle(gDef.thickness ?? 2, color);
-          g.drawCircle(0, 0, gDef.radius ?? 20);
-        } else if (gDef.shape === 'fist') {
-          g.beginFill(color);
-          g.drawRoundedRect(-26, -4, 14, 18, 5);  // thumb
-          g.drawRoundedRect(-18, -16, 36, 26, 5); // knuckle block
-          g.endFill();
-        }
-        container.addChild(g);
-        play.graphicsObjects.push({ g, born: performance.now(), duration: gDef.duration, def: gDef });
-      }, gDef.start);
-      play.timers.push(startTimer);
-    });
-
-    // Start each emitter at its scheduled start time.
-    (json.emitters ?? []).forEach(emitterDef => {
-      const startTimer = setTimeout(() => {
-        const resolvedConfig = this._resolveConfig(emitterDef.config);
-        const isWorld = !!emitterDef.worldSpace;
-        const parent  = isWorld ? worldContainer : container;
-        const emitter = new Emitter(parent, resolvedConfig);
-        emitter.emit = true;
-        play.emitters.push(emitter);
-
-        if (isWorld) {
-          const { cx, cy } = getCometPos(performance.now());
-          emitter.spawnPos.set(cx, cy);
-          play.worldEmitters.push(emitter);
-        }
-
-        if (emitterDef.oppositeTravel) {
-          play.oppositeEmitters.push(emitter);
-        }
-
-        if (emitterDef.startRotation) {
-          emitter.minStartRotation = emitterDef.startRotation.min;
-          emitter.maxStartRotation = emitterDef.startRotation.max;
-        }
-
-        const stopTimer = setTimeout(() => {
-          emitter.emit = false;
-        }, emitterDef.end - emitterDef.start);
-
-        play.timers.push(stopTimer);
-      }, emitterDef.start);
-
-      play.timers.push(startTimer);
-    });
-
-    // Tick this play's emitters every frame, and handle motion.
-    let last = motionStart;
-    play.tickerFn = () => {
+    let last = performance.now();
+    const tickerFn = () => {
       const now = performance.now();
-      const elapsed = (now - last) * 0.001;
+      emitter.update((now - last) * 0.001);
       last = now;
-      play.emitters.forEach(e => { try { e.update(elapsed); } catch {} });
-
-      play.graphicsObjects = play.graphicsObjects.filter(({ g, born, duration, def }) => {
-        const t = Math.min((now - born) / duration, 1);
-        if (def.alpha) g.alpha = lerpKeyframes(def.alpha, t);
-        if (def.scale) { const s = lerpKeyframes(def.scale, t); g.scale.set(s); }
-        if (t >= 1) { try { g.destroy(); } catch {} return false; }
-        return true;
-      });
-
-      if (motion && play.container) {
-        const { cx, cy } = getCometPos(now);
-        play.container.x = cx;
-        play.container.y = cy;
-
-        play.worldEmitters.forEach(e => {
-          if (e.emit) e.spawnPos.set(cx, cy);
-        });
-
-        if (play.oppositeEmitters.length > 0) {
-          const t2 = Math.min((now - motionStart) / motion.duration, 1);
-          let oppAngle;
-          if (motion.type === 'arc') {
-            const angle = motion.startAngle + (motion.endAngle - motion.startAngle) * t2;
-            oppAngle = Math.atan2(-Math.cos(angle), Math.sin(angle));
-          } else {
-            oppAngle = Math.atan2(-motion.dy, -motion.dx);
-          }
-          const oppDeg = oppAngle * (180 / Math.PI);
-          const spread = 20;
-          play.oppositeEmitters.forEach(e => {
-            e.minStartRotation = oppDeg - spread;
-            e.maxStartRotation = oppDeg + spread;
-          });
-        }
-      }
     };
-    this._app.ticker.add(play.tickerFn);
+    this._app.ticker.add(tickerFn);
 
-    // Auto-cleanup this play after total duration.
-    play.timers.push(setTimeout(cleanup, json.duration));
+    const emitDuration = json.emitDuration ?? 100;
+    const stopEmit = setTimeout(() => { emitter.emit = false; }, emitDuration);
+    const cleanup  = setTimeout(() => this.stop(), json.duration);
+
+    this._active = { container, emitter, tickerFn, timers: [stopEmit, cleanup] };
   }
 
-  // ── playAttack ────────────────────────────────────────────
-  // Fires all plays in an attack JSON simultaneously.
-  // Each play uses its own offsetX/offsetY relative to (x, y).
-  playAttack(json, x, y) {
-    if (json.plays) {
-      json.plays.forEach(p => {
-        this.play(p, x + (p.offsetX ?? 0), y + (p.offsetY ?? 0));
-      });
-    } else {
-      this.play(json, x, y);
-    }
-  }
-
-  // ── stop ──────────────────────────────────────────────────
-  // Stops ALL active plays immediately.
   stop() {
-    [...this._activePlays].forEach(play => this._cleanupPlay(play));
-  }
-
-  // ── _cleanupPlay ──────────────────────────────────────────
-  // Cleans up a single play instance and removes it from the active list.
-  _cleanupPlay(play) {
-    play.timers.forEach(clearTimeout);
-    play.timers = [];
-
-    if (play.tickerFn) {
-      this._app.ticker.remove(play.tickerFn);
-      play.tickerFn = null;
-    }
-
-    play.emitters.forEach(e => e.destroy());
-    play.emitters = [];
-
-    play.graphicsObjects.forEach(({ g }) => { try { g.destroy(); } catch {} });
-    play.graphicsObjects = [];
-
-    if (play.worldContainer) {
-      this._app.stage.removeChild(play.worldContainer);
-      play.worldContainer.destroy({ children: true });
-      play.worldContainer = null;
-    }
-
-    if (play.container) {
-      this._app.stage.removeChild(play.container);
-      play.container.destroy({ children: true });
-      play.container = null;
-    }
-
-    this._activePlays = this._activePlays.filter(p => p !== play);
+    if (!this._active) return;
+    const { container, emitter, tickerFn, timers } = this._active;
+    timers.forEach(clearTimeout);
+    this._app.ticker.remove(tickerFn);
+    emitter.destroy();
+    this._app.stage.removeChild(container);
+    container.destroy({ children: true });
+    this._active = null;
   }
 }

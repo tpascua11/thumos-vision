@@ -2,57 +2,33 @@
 import { useEffect, useRef, useState } from 'react'
 import styles from './AnimationStage.module.css'
 
-import baseSliceJson   from '../reference/base_slice.json'
-import sliceJson       from '../reference/slice-base.json'
-import hslashJson      from '../reference/h-slash.json'
-import diagonalJson    from '../reference/diagonal.json'
-import hammerJson      from '../reference/side-hammer.json'
-import flameStrikeJson  from '../reference/flame_strike.json'
-import flameStrike2Json from '../reference/flame_strike_2.json'
-import flameStrike3Json from '../reference/flame_strike_3.json'
-import flameStrike5Json from '../reference/flame_strike_5.json'
-import flameStrike6Json from '../reference/flame_strike_6.json'
-import flameStrike7Json from '../reference/flame_strike_7.json'
-import flameStrike8Json      from '../reference/flame_strike_8.json'
-import trueFlameStrikeJson   from '../reference/true_flame_strike.json'
-import flameStrike9Json      from '../reference/flame_strike_9.json'
-import sliceTrueJson    from '../reference/slice-true.json'
-import punchV1Json      from '../reference/punch_v1.json'
-import punchV2Json      from '../reference/punch_v2.json'
-
-const FILES: Record<string, any> = {
-  'base_slice':     baseSliceJson,
-  'slice-base':     sliceJson,
-  'slice-true':     sliceTrueJson,
-  'h-slash':        hslashJson,
-  'diagonal':       diagonalJson,
-  'side-hammer':    hammerJson,
-  'flame_strike':   flameStrikeJson,
-  'flame_strike_2': flameStrike2Json,
-  'flame_strike_3': flameStrike3Json,
-  'flame_strike_5': flameStrike5Json,
-  'flame_strike_6': flameStrike6Json,
-  'flame_strike_7': flameStrike7Json,
-  'flame_strike_8':    flameStrike8Json,
-  'true_flame_strike': trueFlameStrikeJson,
-  'flame_strike_9':    flameStrike9Json,
-  'punch_v1':          punchV1Json,
-  'punch_v2':          punchV2Json,
-}
+const DEFAULT_JSON = JSON.stringify({
+  duration: 800,
+  emitDuration: 80,
+  emitter: {
+    lifetime: { min: 0.2, max: 0.5 },
+    frequency: 0.001,
+    maxParticles: 60,
+    addAtBack: false,
+    pos: { x: 0, y: 0 },
+    behaviors: [
+      { type: 'alpha',         config: { alpha: { list: [{ value: 1, time: 0 }, { value: 0, time: 1 }] } } },
+      { type: 'scale',         config: { scale: { list: [{ value: 1, time: 0 }, { value: 0, time: 1 }] }, minMult: 0.3 } },
+      { type: 'color',         config: { color: { list: [{ value: 'ffffff', time: 0 }, { value: 'ffaa00', time: 1 }] } } },
+      { type: 'moveSpeed',     config: { speed: { list: [{ value: 200, time: 0 }, { value: 10, time: 1 }] }, minMult: 0.3 } },
+      { type: 'rotationStatic', config: { min: 0, max: 360 } },
+      { type: 'textureSingle', config: { texture: 'spark' } }
+    ]
+  }
+}, null, 2)
 
 export default function AnimationStage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef    = useRef<any>(null)
   const interpRef = useRef<any>(null)
   const [ready,      setReady]      = useState(false)
-  const [file,       setFile]       = useState('slice-base')
-  const [json,       setJson]       = useState(() => JSON.stringify(sliceJson, null, 2))
+  const [json,       setJson]       = useState(DEFAULT_JSON)
   const [parseError, setParseError] = useState<string | null>(null)
-
-  useEffect(() => {
-    setJson(JSON.stringify(FILES[file], null, 2))
-    setParseError(null)
-  }, [file])
 
   useEffect(() => {
     let app: any
@@ -85,8 +61,7 @@ export default function AnimationStage() {
       setParseError(null)
       const cx = appRef.current.screen.width  / 2
       const cy = appRef.current.screen.height / 2
-      interpRef.current.stop()
-      interpRef.current.playAttack(parsed, cx, cy)
+      interpRef.current.play(parsed, cx, cy)
     } catch (e: any) {
       setParseError(e.message)
     }
@@ -96,30 +71,9 @@ export default function AnimationStage() {
     interpRef.current?.stop()
   }
 
-  function download() {
-    const blob = new Blob([json], { type: 'application/json' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    a.href     = url
-    a.download = `${file}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <div className={styles.stage}>
       <aside className={styles.sidebar}>
-
-        <div className={styles.sideSection}>
-          <div className={styles.sideLabel}>File</div>
-          <select
-            className={styles.select}
-            value={file}
-            onChange={e => setFile(e.target.value)}
-          >
-            {Object.keys(FILES).map(k => <option key={k} value={k}>{k}</option>)}
-          </select>
-        </div>
 
         <div className={`${styles.sideSection} ${styles.editorSection}`}>
           <div className={styles.sideLabel}>JSON</div>
@@ -133,9 +87,8 @@ export default function AnimationStage() {
         </div>
 
         <div className={styles.sideSection}>
-          <button className={styles.playAllBtn}  onClick={play}     disabled={!ready}>▶ PLAY</button>
-          <button className={styles.stopBtn}     onClick={stop}     disabled={!ready}>■ STOP</button>
-          <button className={styles.downloadBtn} onClick={download}>↓ DOWNLOAD JSON</button>
+          <button className={styles.playAllBtn} onClick={play} disabled={!ready}>▶ PLAY</button>
+          <button className={styles.stopBtn}    onClick={stop} disabled={!ready}>■ STOP</button>
         </div>
 
       </aside>
