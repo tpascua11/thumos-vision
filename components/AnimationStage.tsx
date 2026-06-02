@@ -11,6 +11,7 @@ import flameStrike2Json from '../reference/flame_strike_2.json'
 import flameStrike3Json from '../reference/flame_strike_3.json'
 import flameStrike5Json from '../reference/flame_strike_5.json'
 import flameStrike6Json from '../reference/flame_strike_6.json'
+import flameStrike7Json from '../reference/flame_strike_7.json'
 import sliceTrueJson    from '../reference/slice-true.json'
 
 const FILES: Record<string, any> = {
@@ -24,6 +25,7 @@ const FILES: Record<string, any> = {
   'flame_strike_3': flameStrike3Json,
   'flame_strike_5': flameStrike5Json,
   'flame_strike_6': flameStrike6Json,
+  'flame_strike_7': flameStrike7Json,
 }
 
 export default function AnimationStage() {
