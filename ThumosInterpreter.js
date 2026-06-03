@@ -24,33 +24,32 @@ function parseStops(colorStops) {
 export class ThumosInterpreter {
   constructor(app) {
     this._app = app;
-    this._active = null;
+    this._layers = [];
+    this._delayTimers = [];
   }
 
-  // JSON shape:
-  // {
-  //   speed, angle,         — particle launch velocity
-  //   rate, sizeMin, sizeMax, lifetime, spread, gravity,
-  //   additive, rotation,
-  //   colorStops,            — ["#rrggbb", ...]
-  //   emitDuration,          — ms to spawn (default: motion.duration if present, else 100)
-  //   duration,              — ms total cleanup (default: emitDuration + lifetime*2000)
-  //   motion: {              — optional: moves the spawn point over time
-  //     fromX, fromY,        — start offset from (x, y)
-  //     dx, dy,              — displacement from start
-  //     duration             — ms to complete the move
-  //   }
-  // }
+  // Accepts a single config object or an array of config objects.
+  // Each config in an array can have a `delay` field (ms) to fire after the others.
   play(json, x, y) {
     this.stop();
+    const configs = Array.isArray(json) ? json : [json];
+    for (const config of configs) {
+      const delay = config.delay ?? 0;
+      if (delay > 0) {
+        const t = setTimeout(() => this._playLayer(config, x, y), delay);
+        this._delayTimers.push(t);
+      } else {
+        this._playLayer(config, x, y);
+      }
+    }
+  }
 
+  _playLayer(json, x, y) {
     const motion   = json.motion ?? null;
     const motionMs = motion ? motion.duration : 0;
     const emitMs   = json.emitDuration ?? (motion ? motionMs : 100);
     const totalMs  = json.duration ?? emitMs + (json.lifetime ?? 0.8) * 2000;
 
-    // When motion is present the container sits at (0,0) so particle positions
-    // are in world space — already-born particles don't move with the spawn point.
     const container = new PIXI.Container();
     if (!motion) { container.x = x; container.y = y; }
     this._app.stage.addChild(container);
@@ -72,9 +71,9 @@ export class ThumosInterpreter {
     const rotation = json.rotation  ?? false;
     const shape    = json.shape     ?? 'square';
     const drawFns = {
-      square:   (g, sz, c) => g.rect(-sz/2, -sz/2, sz, sz).fill(c),
-      circle:   (g, sz, c) => g.circle(0, 0, sz/2).fill(c),
-      spark:    (g, sz, c) => g.rect(-sz, -sz*0.15, sz*2, sz*0.3).fill(c),
+      square: (g, sz, c) => g.rect(-sz/2, -sz/2, sz, sz).fill(c),
+      circle: (g, sz, c) => g.circle(0, 0, sz/2).fill(c),
+      spark:  (g, sz, c) => g.rect(-sz, -sz*0.15, sz*2, sz*0.3).fill(c),
     };
     const drawParticle = drawFns[shape] ?? drawFns.square;
 
@@ -87,7 +86,6 @@ export class ThumosInterpreter {
       };
     };
 
-    // Comet head — visible white square that leads the motion
     let head = null;
     if (motion && json.showHead !== false) {
       head = new PIXI.Graphics();
@@ -101,9 +99,9 @@ export class ThumosInterpreter {
     let last       = performance.now();
 
     const spawnParticle = (sx, sy) => {
-      const sz     = lerp(json.sizeMin ?? 3, json.sizeMax ?? 11, Math.random());
-      const vx     = Math.cos(angleRad) * speed + (Math.random() - 0.5) * spreadX;
-      const vy     = Math.sin(angleRad) * speed + (Math.random() - 0.5) * spreadY;
+      const sz      = lerp(json.sizeMin ?? 3, json.sizeMax ?? 11, Math.random());
+      const vx      = Math.cos(angleRad) * speed + (Math.random() - 0.5) * spreadX;
+      const vy      = Math.sin(angleRad) * speed + (Math.random() - 0.5) * spreadY;
       const life    = lifetime * (0.6 + Math.random() * 0.8);
       const rotSpd  = (rotation && shape !== 'spark') ? (Math.random() - 0.5) * 4 : 0;
       const initRot = shape === 'spark' ? Math.atan2(vy, vx) : (rotation ? Math.random() * Math.PI * 2 : 0);
@@ -127,7 +125,6 @@ export class ThumosInterpreter {
       const emitSec = emitMs / 1000;
       const { sx, sy } = getSpawnPos(elapsed);
 
-      // Move and draw comet head
       if (head) {
         const headSz = (json.sizeMax ?? 11) * 1.5;
         head.visible = elapsed < motionMs / 1000;
@@ -138,7 +135,6 @@ export class ThumosInterpreter {
         }
       }
 
-      // Spawn particles
       if (elapsed < emitSec) {
         emitTimer += dt;
         while (emitTimer >= interval) {
@@ -147,7 +143,6 @@ export class ThumosInterpreter {
         }
       }
 
-      // Update particles
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.age += dt;
@@ -172,17 +167,23 @@ export class ThumosInterpreter {
     };
 
     this._app.ticker.add(tickerFn);
-    const timer = setTimeout(() => this.stop(), totalMs);
-    this._active = { container, tickerFn, timer };
+
+    const layer = { container, tickerFn, timer: null };
+    layer.timer = setTimeout(() => this._removeLayer(layer), totalMs);
+    this._layers.push(layer);
+  }
+
+  _removeLayer(layer) {
+    clearTimeout(layer.timer);
+    this._app.ticker.remove(layer.tickerFn);
+    this._app.stage.removeChild(layer.container);
+    layer.container.destroy({ children: true });
+    this._layers = this._layers.filter(l => l !== layer);
   }
 
   stop() {
-    if (!this._active) return;
-    const { container, tickerFn, timer } = this._active;
-    clearTimeout(timer);
-    this._app.ticker.remove(tickerFn);
-    this._app.stage.removeChild(container);
-    container.destroy({ children: true });
-    this._active = null;
+    for (const t of this._delayTimers) clearTimeout(t);
+    this._delayTimers = [];
+    for (const layer of [...this._layers]) this._removeLayer(layer);
   }
 }
