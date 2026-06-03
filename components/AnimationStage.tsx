@@ -17,6 +17,29 @@ const PRESETS: Record<string, object> = {
     emitDuration: 80,
     colorStops:   ['#ffffff', '#ff3366', '#ff6a00', '#ffdd00'],
   },
+  SAMURAI_DIAGONAL: {
+    speed:        120,
+    angle:        225,
+    rate:         25,
+    sizeMin:      1,
+    sizeMax:      11,
+    lifetime:     0.6,
+    spread:       40,
+    spreadX:      20,
+    spreadY:      80,
+    gravity:      30,
+    additive:     true,
+    rotation:     true,
+    shape:        'spark',
+    colorStops:   ['#ffffff', '#ffe066', '#ff6a00', '#cc00ff'],
+    motion: {
+      fromX:    -200,
+      fromY:    -200,
+      dx:       400,
+      dy:       400,
+      duration: 300,
+    },
+  },
   SAMURAI_SLICE: {
     speed:        120,
     angle:        180,
@@ -141,17 +164,15 @@ export default function AnimationStage() {
 
         <div className={styles.sideSection}>
           <div className={styles.sideLabel}>Preset</div>
-          <div className={styles.presetRow}>
+          <select
+            className={styles.select}
+            value={preset}
+            onChange={e => selectPreset(e.target.value)}
+          >
             {Object.keys(PRESETS).map(name => (
-              <button
-                key={name}
-                className={`${styles.presetBtn} ${preset === name ? styles.presetBtnActive : ''}`}
-                onClick={() => selectPreset(name)}
-              >
-                {name}
-              </button>
+              <option key={name} value={name}>{name}</option>
             ))}
-          </div>
+          </select>
         </div>
 
         <div className={`${styles.sideSection} ${styles.editorSection}`}>
