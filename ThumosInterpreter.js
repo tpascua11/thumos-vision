@@ -65,6 +65,13 @@ export class ThumosInterpreter {
     const gravity  = json.gravity   ?? 40;
     const additive = json.additive  ?? false;
     const rotation = json.rotation  ?? false;
+    const shape    = json.shape     ?? 'square';
+    const drawFns = {
+      square:   (g, sz, c) => g.rect(-sz/2, -sz/2, sz, sz).fill(c),
+      circle:   (g, sz, c) => g.circle(0, 0, sz/2).fill(c),
+      spark:    (g, sz, c) => g.rect(-sz, -sz*0.15, sz*2, sz*0.3).fill(c),
+    };
+    const drawParticle = drawFns[shape] ?? drawFns.square;
 
     const getSpawnPos = (elapsedSec) => {
       if (!motion) return { sx: 0, sy: 0 };
@@ -92,13 +99,14 @@ export class ThumosInterpreter {
       const sz     = lerp(json.sizeMin ?? 3, json.sizeMax ?? 11, Math.random());
       const vx     = Math.cos(angleRad) * speed + (Math.random() - 0.5) * spread;
       const vy     = Math.sin(angleRad) * speed + (Math.random() - 0.5) * spread;
-      const life   = lifetime * (0.6 + Math.random() * 0.8);
-      const rotSpd = rotation ? (Math.random() - 0.5) * 4 : 0;
+      const life    = lifetime * (0.6 + Math.random() * 0.8);
+      const rotSpd  = (rotation && shape !== 'spark') ? (Math.random() - 0.5) * 4 : 0;
+      const initRot = shape === 'spark' ? Math.atan2(vy, vx) : (rotation ? Math.random() * Math.PI * 2 : 0);
 
       const g = new PIXI.Graphics();
       g.x         = sx + (Math.random() - 0.5) * 6;
       g.y         = sy + (Math.random() - 0.5) * 6;
-      g.rotation  = rotation ? Math.random() * Math.PI * 2 : 0;
+      g.rotation  = initRot;
       g.blendMode = additive ? 'add' : 'normal';
       container.addChild(g);
 
@@ -154,7 +162,7 @@ export class ThumosInterpreter {
 
         const color = getColor(stops, t);
         p.g.clear();
-        p.g.rect(-p.sz / 2, -p.sz / 2, p.sz, p.sz).fill(color);
+        drawParticle(p.g, p.sz, color);
       }
     };
 
