@@ -57,7 +57,10 @@ export class ThumosInterpreter {
 
     const particles = [];
     const stops    = parseStops(json.colorStops);
-    const angleRad = (json.angle    ?? 0)   * Math.PI / 180;
+    const autoAngle = (motion && json.emitAngle === 'auto')
+      ? Math.atan2(-(motion.dy ?? 0), -(motion.dx ?? 0))
+      : (json.angle ?? 0) * Math.PI / 180;
+    const angleRad = autoAngle;
     const speed    = json.speed     ?? 0;
     const spread   = json.spread    ?? 50;
     const spreadX  = json.spreadX   ?? spread;

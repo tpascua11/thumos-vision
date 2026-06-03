@@ -19,7 +19,7 @@ const PRESETS: Record<string, object> = {
   },
   SAMURAI_DIAGONAL: {
     speed:        120,
-    angle:        225,
+    emitAngle:    'auto',
     rate:         25,
     sizeMin:      1,
     sizeMax:      11,
