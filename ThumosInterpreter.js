@@ -31,7 +31,6 @@ export class ThumosInterpreter {
   // Accepts a single config object or an array of config objects.
   // Each config in an array can have a `delay` field (ms) to fire after the others.
   play(json, x, y) {
-    this.stop();
     const configs = Array.isArray(json) ? json : [json];
     for (const config of configs) {
       const delay = config.delay ?? 0;
@@ -50,8 +49,10 @@ export class ThumosInterpreter {
     const emitMs   = json.emitDuration ?? (motion ? motionMs : 100);
     const totalMs  = json.duration ?? emitMs + (json.lifetime ?? 0.8) * 2000;
 
+    const ox = json.offsetX ?? 0;
+    const oy = json.offsetY ?? 0;
     const container = new PIXI.Container();
-    if (!motion) { container.x = x; container.y = y; }
+    if (!motion) { container.x = x + ox; container.y = y + oy; }
     this._app.stage.addChild(container);
 
     const particles = [];
@@ -81,8 +82,8 @@ export class ThumosInterpreter {
       if (!motion) return { sx: 0, sy: 0 };
       const t = Math.min(elapsedSec / (motionMs / 1000), 1);
       return {
-        sx: x + (motion.fromX ?? 0) + (motion.dx ?? 0) * t,
-        sy: y + (motion.fromY ?? 0) + (motion.dy ?? 0) * t,
+        sx: x + ox + (motion.fromX ?? 0) + (motion.dx ?? 0) * t,
+        sy: y + oy + (motion.fromY ?? 0) + (motion.dy ?? 0) * t,
       };
     };
 

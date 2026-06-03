@@ -17,6 +17,60 @@ const PRESETS: Record<string, object> = {
     emitDuration: 80,
     colorStops:   ['#ffffff', '#ff3366', '#ff6a00', '#ffdd00'],
   },
+  SAMURAI_HEAVY_SLICE_1: [
+    {
+      speed: 120, emitAngle: 'auto', rate: 25,
+      sizeMin: 1, sizeMax: 11, lifetime: 0.6,
+      spreadX: 20, spreadY: 80, gravity: 30,
+      additive: true, shape: 'spark',
+      colorStops: ['#ffffff', '#ffe066', '#ff6a00'],
+      motion: { fromX: -120, fromY: -120, dx: 240, dy: 240, duration: 300 },
+    },
+    {
+      delay: 200, offsetX: 35, offsetY: 35,
+      speed: 350, angle: 225, rate: 35,
+      sizeMin: 3, sizeMax: 12, lifetime: 0.4,
+      spread: 260, gravity: 100,
+      additive: true, rotation: true, emitDuration: 160,
+      colorStops: ['#ffffff', '#ffe066', '#ff6a00'],
+    },
+  ],
+  SAMURAI_HEAVY_SLICE_2: [
+    // First slash: top-left → bottom-right
+    {
+      speed: 120, emitAngle: 'auto', rate: 25,
+      sizeMin: 1, sizeMax: 11, lifetime: 0.6,
+      spreadX: 20, spreadY: 80, gravity: 30,
+      additive: true, shape: 'spark',
+      colorStops: ['#ffffff', '#ffe066', '#ff6a00'],
+      motion: { fromX: -120, fromY: -120, dx: 240, dy: 240, duration: 300 },
+    },
+    {
+      delay: 200, offsetX: 35, offsetY: 35,
+      speed: 350, angle: 225, rate: 35,
+      sizeMin: 3, sizeMax: 12, lifetime: 0.4,
+      spread: 260, gravity: 100,
+      additive: true, rotation: true, emitDuration: 160,
+      colorStops: ['#ffffff', '#ffe066', '#ff6a00'],
+    },
+    // Second slash (mirrored): top-right → bottom-left, delayed
+    {
+      delay: 200, speed: 120, emitAngle: 'auto', rate: 25,
+      sizeMin: 1, sizeMax: 11, lifetime: 0.6,
+      spreadX: 20, spreadY: 80, gravity: 30,
+      additive: true, shape: 'spark',
+      colorStops: ['#ffffff', '#ffe066', '#ff6a00'],
+      motion: { fromX: 120, fromY: -120, dx: -240, dy: 240, duration: 300 },
+    },
+    {
+      delay: 400, offsetX: -35, offsetY: 35,
+      speed: 350, angle: 315, rate: 35,
+      sizeMin: 3, sizeMax: 12, lifetime: 0.4,
+      spread: 260, gravity: 100,
+      additive: true, rotation: true, emitDuration: 160,
+      colorStops: ['#ffffff', '#ffe066', '#ff6a00'],
+    },
+  ],
   SAMURAI_DIAGONAL: {
     speed:        120,
     emitAngle:    'auto',
