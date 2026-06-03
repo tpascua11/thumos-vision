@@ -60,6 +60,8 @@ export class ThumosInterpreter {
     const angleRad = (json.angle    ?? 0)   * Math.PI / 180;
     const speed    = json.speed     ?? 0;
     const spread   = json.spread    ?? 50;
+    const spreadX  = json.spreadX   ?? spread;
+    const spreadY  = json.spreadY   ?? spread;
     const rate     = json.rate      ?? 8;
     const lifetime = json.lifetime  ?? 0.8;
     const gravity  = json.gravity   ?? 40;
@@ -97,8 +99,8 @@ export class ThumosInterpreter {
 
     const spawnParticle = (sx, sy) => {
       const sz     = lerp(json.sizeMin ?? 3, json.sizeMax ?? 11, Math.random());
-      const vx     = Math.cos(angleRad) * speed + (Math.random() - 0.5) * spread;
-      const vy     = Math.sin(angleRad) * speed + (Math.random() - 0.5) * spread;
+      const vx     = Math.cos(angleRad) * speed + (Math.random() - 0.5) * spreadX;
+      const vy     = Math.sin(angleRad) * speed + (Math.random() - 0.5) * spreadY;
       const life    = lifetime * (0.6 + Math.random() * 0.8);
       const rotSpd  = (rotation && shape !== 'spark') ? (Math.random() - 0.5) * 4 : 0;
       const initRot = shape === 'spark' ? Math.atan2(vy, vx) : (rotation ? Math.random() * Math.PI * 2 : 0);
